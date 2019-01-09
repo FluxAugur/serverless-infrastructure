@@ -1,0 +1,46 @@
+Resources:
+  PrimeAdmins:
+    Type: "AWS::IAM::Group"
+    Properties:
+      GroupName: PrimeAdmins
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AdministratorAccess
+
+  PrimePowerUsers:
+    Type: "AWS::IAM::Group"
+    Properties:
+      GroupName: PrimePowerUsers
+      # These manaaged policies may grant permissions to other services in addition to the ones named.
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonRoute53DomainsFullAccess
+        - arn:aws:iam::aws:policy/AmazonS3FullAccess
+        - arn:aws:iam::aws:policy/IAMReadOnlyAccess
+        - arn:aws:iam::aws:policy/AWSCloudFormationReadOnlyAccess
+        - arn:aws:iam::aws:policy/CloudWatchEventsFullAccess
+        - arn:aws:iam::aws:policy/AWSCloudTrailFullAccess
+        - arn:aws:iam::aws:policy/job-function/Billing
+        - Fn::ImportValue: iam-policies-${self:provider.stage}-CloudFormationFullAccessArn
+
+  PrimeUsers:
+    Type: "AWS::IAM::Group"
+    Properties:
+      GroupName: PrimeUsers
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/IAMSelfManageServiceSpecificCredentials
+        - arn:aws:iam::aws:policy/IAMUserChangePassword
+        - arn:aws:iam::aws:policy/IAMUserSSHKeys
+
+  DevAdmins:
+    Type: "AWS::IAM::Group"
+    Properties:
+      GroupName: DevAdmins
+      ManagedPolicyArns:
+        - Fn::ImportValue: iam-policies-${self:provider.stage}-OrganizationAccountAccessServerlessDevAdminPolicyArn
+
+   DevUsers:
+     Type: "AWS::IAM::Group"
+     Properties:
+       GroupName: DevUsers
+       ManagedPolicyArns:
+         - Fn::ImportValue: iam-policies-${self:provider.stage}-OrganizationAccountAccessServerlessDevUsersPolicyArn
+

@@ -1,0 +1,17 @@
+Resources:
+  tomAdmin:
+    Type: "AWS::IAM::User"
+    Properties:
+      Groups:
+        - PrimeAdmins
+        - DevAdmins
+      UserName: tom-admin
+  tom:
+    Type: "AWS::IAM::User"
+    Properties:
+      Groups:
+        - PrimePowerUsers
+        - PrimeUsers
+        - DevUsers
+      UserName: tom
+

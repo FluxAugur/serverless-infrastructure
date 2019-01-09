@@ -1,0 +1,236 @@
+# Welcome to serverless. Read the docs at https://serverless.com/framework/docs/
+#
+# serverless.yml is the configuration the CLI used to deploy your code to your provider of choice
+#
+# The `service` block is the name of the service
+service: dashbird-integration
+
+custom:
+  dashbird_account_id: "458024764010"
+  dashbird_external_id: "${env:EXTERNAL_ID}"
+
+# Note: Password policy cannot be set with CFN resources.
+# https://github.com/widdix/aws-cf-templates/blob/master/security/account-password-policy.yaml
+
+# The `provider` block defines where your service will be deployed
+provider:
+  name: aws
+  stage: ${opt:stage, env:SLS_STAGE, 'dev'}
+  profile: ${opt:aws-profile, env:AWS_PROFILE, env:AWS_DEFAULT_PROFILE, 'default'}
+
+resources:
+  Parameters:
+    DashbirdAccountId:
+      Type: String
+      Description: "Dashbird's account ID"
+      Default: "${self:custom.dashbird_account_id}"
+
+    DashbirdExternalId:
+      Type: String
+      Description: "Dashbird's external ID for your organization"
+      Default: "${self:custom.dashbird_external_id}"
+
+  Resources:
+    LambdaLogGroup:
+      Type: AWS::Logs::LogGroup
+      DeletionPolicy: Retain
+      Properties:
+        LogGroupName: "/aws/lambda/dashbird-periodic-subscriber"
+
+    LambdaExecutionRole:
+      Type: AWS::IAM::Role
+      DeletionPolicy: Retain
+      Properties:
+        AssumeRolePolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+              - lambda.amazonaws.com
+            Action:
+            - sts:AssumeRole
+        Path: "/"
+        Policies:
+        - PolicyName: root
+          PolicyDocument:
+            {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Action": "logs:CreateLogStream",
+                  "Resource": [
+                    {
+                      "Fn::Sub": "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/dashbird-periodic-subscriber:*"
+                    }
+                  ]
+                },
+                {
+                  "Effect": "Allow",
+                  "Action": "logs:PutLogEvents",
+                  "Resource": [
+                    {
+                      "Fn::Sub": "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/dashbird-periodic-subscriber:*:*"
+                    }
+                  ]
+                },
+                {
+                  "Effect": "Allow",
+                  "Action": "logs:PutSubscriptionFilter",
+                  "Resource": "*"
+                },
+                {
+                  "Effect": "Allow",
+                  "Action": "logs:DescribeSubscriptionFilters",
+                  "Resource": "*"
+                },
+                {
+                  "Effect": "Allow",
+                  "Action": "logs:DeleteSubscriptionFilter",
+                  "Resource": "*"
+                }
+              ]
+            }
+
+    DashbirdIntegrationRole:
+      Type: AWS::IAM::Role
+      # let's not lock us out the org
+      DeletionPolicy: Retain
+      Properties:
+        AssumeRolePolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Principal:
+              AWS:
+                Fn::Join:
+                  - ''
+                  - - "arn:aws:iam::"
+                  - Ref: DashbirdAccountId
+                  - ":root"
+            Action:
+            - sts:AssumeRole
+            Condition:
+              StringEquals:
+                sts:ExternalId:
+                  Ref: DashbirdExternalId
+        Path: "/"
+        Policies:
+        - PolicyName: DashbirdAccess
+          PolicyDocument:
+            {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Action": "logs:FilterLogEvents",
+                  "Resource": "*"
+                },
+                {
+                  "Effect": "Allow",
+                  "Action": "logs:describeLogStreams",
+                  "Resource": "*"
+                },
+                {
+                  "Effect": "Allow",
+                  "Action": "lambda:listFunctions",
+                  "Resource": "*"
+                },
+                {
+                  "Effect": "Allow",
+                  "Action": "lambda:listTags",
+                  "Resource": "*"
+                },
+                {
+                  "Effect": "Allow",
+                  "Action": "xray:Get*",
+                  "Resource": "*"
+                },
+                {
+                  "Effect": "Allow",
+                  "Action": "xray:BatchGet*",
+                  "Resource": "*"
+                },
+                {
+                  "Effect": "Allow",
+                  "Action": "apigateway:GET",
+                  "Resource": "*"
+                },
+                {
+                  "Effect": "Allow",
+                  "Action": "apigateway:HEAD",
+                  "Resource": "*"
+                },
+                {
+                  "Effect": "Allow",
+                  "Action": "apigateway:OPTIONS",
+                  "Resource": "*"
+                }
+              ]
+            }
+
+    SubscriberLambda:
+      Type: "AWS::Lambda::Function"
+      DeletionPolicy: Retain
+      Properties:
+        FunctionName: "dashbird-periodic-subscriber"
+        Handler: "index.handler"
+        Environment:
+          Variables:
+            EXTERNAL_ID:
+              Ref: DashbirdExternalId
+            DASHBIRD_ROLE_ARN:
+              Fn::GetAtt:
+                - "DashbirdIntegrationRole"
+                - "Arn"
+        Role:
+          Fn::GetAtt:
+            - "LambdaExecutionRole"
+            - "Arn"
+        Code:
+          S3Bucket: "dashbird-subscriber"
+          S3Key: "index_12638e6710293fa5ae5db942a0d059be.zip"
+        Runtime: "nodejs8.10"
+        Timeout: "300"
+        MemorySize: "192"
+    ScheduledRule:
+      Type: "AWS::Events::Rule"
+      DeletionPolicy: Retain
+      Properties:
+        Description: "ScheduledRule"
+        ScheduleExpression: "rate(5 minutes)"
+        State: "ENABLED"
+        Targets:
+          -
+            Arn:
+              Fn::GetAtt:
+                - "SubscriberLambda"
+                - "Arn"
+            Id: "TargetFunctionV1"
+
+    PermissionForEventsToInvokeLambda:
+      Type: "AWS::Lambda::Permission"
+      DeletionPolicy: Retain
+      Properties:
+        FunctionName:
+          Ref: "SubscriberLambda"
+        Action: "lambda:InvokeFunction"
+        Principal: "events.amazonaws.com"
+        SourceArn:
+          Fn::GetAtt:
+            - "ScheduledRule"
+            - "Arn"
+
+  Outputs:
+    DashbirdIntegrationRoleArn:
+      Description: "Arn of integration role."
+      Value:
+        Fn::GetAtt:
+          - DashbirdIntegrationRole
+          - Arn
+    DashbirdIntegrationRoleExternalId:
+      Description: "Role external Id"
+      Value:
+        Ref: DashbirdExternalId
+
