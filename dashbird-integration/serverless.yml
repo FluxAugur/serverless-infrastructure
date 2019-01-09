@@ -54,44 +54,30 @@ resources:
         Policies:
         - PolicyName: root
           PolicyDocument:
-            {
-              "Version": "2012-10-17",
-              "Statement": [
-                {
-                  "Effect": "Allow",
-                  "Action": "logs:CreateLogStream",
-                  "Resource": [
-                    {
-                      "Fn::Sub": "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/dashbird-periodic-subscriber:*"
-                    }
-                  ]
-                },
-                {
-                  "Effect": "Allow",
-                  "Action": "logs:PutLogEvents",
-                  "Resource": [
-                    {
-                      "Fn::Sub": "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/dashbird-periodic-subscriber:*:*"
-                    }
-                  ]
-                },
-                {
-                  "Effect": "Allow",
-                  "Action": "logs:PutSubscriptionFilter",
-                  "Resource": "*"
-                },
-                {
-                  "Effect": "Allow",
-                  "Action": "logs:DescribeSubscriptionFilters",
-                  "Resource": "*"
-                },
-                {
-                  "Effect": "Allow",
-                  "Action": "logs:DeleteSubscriptionFilter",
-                  "Resource": "*"
-                }
-              ]
-            }
+            Version: '2012-10-17'
+            Statement:
+            - Effect: Allow
+              Action:
+              - logs:CreateLogStream
+              Resource:
+              - Fn::Sub 'arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/dashbird-periodic-subscriber:*'
+            - Effect: Allow
+              Action:
+              - logs:PutLogEvents
+              Resource:
+              - Fn::Sub 'arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/dashbird-periodic-subscriber:*:*'
+            - Effect: Allow
+              Action:
+              - logs:PutSubscriptionFilter
+              Resource: '*'
+            - Effect: Allow
+              Action:
+              - logs:DescribeSubscriptionFilters
+              Resource: '*'
+            - Effect: Allow
+              Action:
+              - logs:DeleteSubscriptionFiler
+              Resource: '*'
 
     DashbirdIntegrationRole:
       Type: AWS::IAM::Role

@@ -9,7 +9,7 @@ provider:
 custom:
   billingAlertSubscriptions:
     - Endpoint: "admin+aws-billing-${self:provider.stage}@nathanialmcconnell.name"
-    Protocol: "email"
+      Protocol: "email"
 
 resources:
   Resources:
@@ -23,7 +23,7 @@ resources:
       Type: "AWS::CloudWatch::Alarm"
       Properties:
         ComparisonOperator: "GreaterThanOrEqualToThreshold"
-        EvaluationPeriod: 1
+        EvaluationPeriods: 1
         Period: 21600
         Namespace: "AWS/Billing"
         MetricName: "EstimatedCharges"
@@ -39,7 +39,7 @@ resources:
       Type: "AWS::CloudWatch::Alarm"
       Properties:
         ComparisonOperator: "GreaterThanOrEqualToThreshold"
-        EvaluationPeriod: 1
+        EvaluationPeriods: 1
         Period: 21600
         Namespace: "AWS/Billing"
         MetricName: "EstimatedCharges"
@@ -55,7 +55,7 @@ resources:
       Type: "AWS::CloudWatch::Alarm"
       Properties:
         ComparisonOperator: "GreaterThanOrEqualToThreshold"
-        EvaluationPeriod: 1
+        EvaluationPeriods: 1
         Period: 21600
         Namespace: "AWS/Billing"
         MetricName: "EstimatedCharges"
