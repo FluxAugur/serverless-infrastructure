@@ -1,16 +1,15 @@
 Resources:
-  PrimeAdmins:
-    Type: "AWS::IAM::Group"
+  Admins:
+    Type: AWS::IAM::Group
     Properties:
-      GroupName: PrimeAdmins
+      GroupName: Admins
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/AdministratorAccess
 
-  PrimePowerUsers:
-    Type: "AWS::IAM::Group"
+  PowerUsers:
+    Type: AWS::IAM::Group
     Properties:
-      GroupName: PrimePowerUsers
-      # These manaaged policies may grant permissions to other services in addition to the ones named.
+      GroupName: PowerUsers
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/AmazonRoute53DomainsFullAccess
         - arn:aws:iam::aws:policy/AmazonS3FullAccess
@@ -21,26 +20,25 @@ Resources:
         - arn:aws:iam::aws:policy/job-function/Billing
         - Fn::ImportValue: iam-policies-${self:provider.stage}-CloudFormationFullAccessArn
 
-  PrimeUsers:
-    Type: "AWS::IAM::Group"
+  Users:
+    Type: AWS::IAM::Group
     Properties:
-      GroupName: PrimeUsers
+      GroupName: Users
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/IAMSelfManageServiceSpecificCredentials
         - arn:aws:iam::aws:policy/IAMUserChangePassword
         - arn:aws:iam::aws:policy/IAMUserSSHKeys
 
   DevAdmins:
-    Type: "AWS::IAM::Group"
+    Type: AWS::IAM::Group
     Properties:
       GroupName: DevAdmins
       ManagedPolicyArns:
-        - Fn::ImportValue: iam-policies-${self:provider.stage}-OrganizationAccountAccessServerlessDevAdminPolicyArn
+        - Fn::ImportValue: iam-policies-${self:provider.stage}-OrganizationAccountAccessDevAdminPolicyArn
 
-   DevUsers:
-     Type: "AWS::IAM::Group"
-     Properties:
-       GroupName: DevUsers
-       ManagedPolicyArns:
-         - Fn::ImportValue: iam-policies-${self:provider.stage}-OrganizationAccountAccessServerlessDevUsersPolicyArn
-
+  DevUsers:
+    Type: AWS::IAM::Group
+    Properties:
+      GroupName: DevUsers
+      ManagedPolicyArns:
+        - Fn::ImportValue: iam-policies-${self:provider.stage}-OrganizationAccountAccessDevUsersPolicyArn

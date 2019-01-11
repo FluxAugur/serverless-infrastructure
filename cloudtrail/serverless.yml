@@ -1,10 +1,9 @@
 service: cloudtrail
 
 custom:
-  logging_enabled: "${env:LOGGING_ENABLED, 'true'}"
-  global_events: "${env:GLOBAL_EVENTS, 'true'}"
-  multi_region: "${env:MULTI_REGION, 'true'}"
-
+  logging_enabled: ${env:LOGGING_ENABLED, 'true'}
+  global_events: ${env:GLOBAL_EVENTS, 'true'}
+  multi_region: ${env:MULTI_REGION, 'true'}
 
 provider:
   name: aws
@@ -16,124 +15,114 @@ provider:
 
 
 resources:
-
   Parameters:
     LoggingEnabled:
-      Type: "String"
-      Description: 'Whether logging is enabled'
-      Default: "${self:custom.logging_enabled}"
+      Type: String
+      Description: Whether logging is enabled
+      Default: ${self:custom.logging_enabled}
 
     GlobalEvents:
-      Type: "String"
-      Description: "Whether the trail is publishing events from global services, such as IAM, to the log files."
-      Default: "${self:custom.global_events}"
+      Type: String
+      Description: Whether the trail is publishing events from global services, such as IAM, to the log files.
+      Default: ${self:custom.global_events}
 
     MultiRegion:
-      Type: "String"
-      Description: "Whether the CloudTrail trail is created in the region in which you create the stack or in all regions."
-      Default: "${self:custom.multi_region}"
+      Type: String
+      Description: Whether the CloudTrail trail is created in the region in which you create the stack or in all regions.
+      Default: ${self:custom.multi_region}
 
 
   Resources:
     S3Bucket:
-      Type: 'AWS::S3::Bucket'
+      Type: AWS::S3::Bucket
       DependsOn: CloudWatchLogs
 
     S3BucketPolicy:
-      Type: 'AWS::S3::BucketPolicy'
+      Type: AWS::S3::BucketPolicy
       Properties:
         Bucket:
           Ref: S3Bucket
         PolicyDocument:
           Statement:
-            - Action: "s3:GetBucketAcl"
-              Effect: "Allow"
+            - Action: s3:GetBucketAcl
+              Effect: Allow
               Resource:
-                Fn::GetAtt:
-                  - S3Bucket
-                  - Arn
+                Fn::GetAtt: S3Bucket.Arn
               Principal:
-                Service: "cloudtrail.amazonaws.com"
-            - Action: "s3:PutObject"
-              Effect: "Allow"
+                Service: cloudtrail.amazonaws.com
+            - Action: s3:PutObject
+              Effect: Allow
               Resource:
                 Fn::Join:
-                  - '/'
-                  - - Fn::GetAtt:
-                        - S3Bucket
-                        - Arn
-                    - 'AWSLogs'
+                  - /
+                  -
+                    - Fn::GetAtt: S3Bucket.Arn
+                    - AWSLogs
                     - '*'
               Principal:
-                Service: "cloudtrail.amazonaws.com"
+                Service: cloudtrail.amazonaws.com
               Condition:
                 StringEquals:
-                  s3:x-amz-acl: "bucket-owner-full-control"
+                  s3:x-amz-acl: bucket-owner-full-control
 
     SnsTopic:
-      Type: 'AWS::SNS::Topic'
+      Type: AWS::SNS::Topic
       DependsOn:
         - CloudWatchLogs
         - S3BucketPolicy
       Properties:
-        DisplayName: 'CloudTrail Events'
+        DisplayName: CloudTrail Events
 
     SnsTopicPolicy:
-      Type: 'AWS::SNS::TopicPolicy'
+      Type: AWS::SNS::TopicPolicy
       DependsOn:
         - CloudWatchLogs
         - S3BucketPolicy
       Properties:
         PolicyDocument:
           Statement:
-            Effect: "Allow"
+            Effect: Allow
             Principal:
-              Service: "cloudtrail.amazonaws.com"
-            Action: "SNS:Publish"
+              Service: cloudtrail.amazonaws.com
+            Action: SNS:Publish
             Resource:
               Ref: SnsTopic
         Topics:
           - Ref: SnsTopic
 
     CloudWatchLogs:
-      Type: "AWS::Logs::LogGroup"
+      Type: AWS::Logs::LogGroup
       Properties:
         RetentionInDays: 30
 
     CloudWatchLogsRole:
-      Type: 'AWS::IAM::Role'
+      Type: AWS::IAM::Role
       Properties:
         AssumeRolePolicyDocument:
           Statement:
-            - Effect: "Allow"
+            - Effect: Allow
               Principal:
-                Service: "cloudtrail.amazonaws.com"
-              Action: "sts:AssumeRole"
+                Service: cloudtrail.amazonaws.com
+              Action: sts:AssumeRole
         Policies:
-          - PolicyName: "CloudWatchLogs"
+          - PolicyName: CloudWatchLogs
             PolicyDocument:
               Statement:
                 - Action:
-                    - "logs:CreateLogStream"
-                    - "logs:PutLogEvents"
-                  Effect: "Allow"
+                    - logs:CreateLogStream
+                    - logs:PutLogEvents
+                  Effect: Allow
                   Resource:
-                    - Fn::GetAtt:
-                      - CloudWatchLogs
-                      - Arn
+                    Fn::GetAtt: CloudWatchLogs.Arn
 
     CloudTrail:
-      Type: 'AWS::CloudTrail::Trail'
+      Type: AWS::CloudTrail::Trail
       DependsOn: SnsTopicPolicy
       Properties:
         CloudWatchLogsLogGroupArn:
-          Fn::GetAtt:
-            - CloudWatchLogs
-            - Arn
+          Fn::GetAtt: CloudWatchLogs.Arn
         CloudWatchLogsRoleArn:
-          Fn::GetAtt:
-            - CloudWatchLogsRole
-            - Arn
+          Fn::GetAtt: CloudWatchLogsRole.Arn
         EnableLogFileValidation: true
         IncludeGlobalServiceEvents:
           Ref: GlobalEvents
@@ -145,4 +134,3 @@ resources:
           Ref: S3Bucket
         SnsTopicName:
           Ref: SnsTopic
-

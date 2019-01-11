@@ -1,7 +1,6 @@
 Resources:
   OrganizationAccountAccessRole:
     Type: "AWS::IAM::Role"
-    # let's not lock us out the org.
     DeletionPolicy: Retain
     Properties:
       RoleName: OrganizationAccountAccessRole
@@ -11,7 +10,7 @@ Resources:
           {
             "Effect": "Allow",
             "Principal": {
-              "AWS": "arn:aws:iam::096188391785:root"
+              "AWS": "arn:aws:iam::${self:custom.account_number_dev}:root"
             },
             "Action": "sts:AssumeRole",
             "Condition": {}
@@ -21,7 +20,6 @@ Resources:
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/AdministratorAccess
 
-  # FIXME: Need to get finer grained with the IAM management permissions. Doing this for now.
   OrganizationAccountAccessUserRole:
     Type: "AWS::IAM::Role"
     Properties:
@@ -32,7 +30,7 @@ Resources:
           {
             "Effect": "Allow",
             "Principal": {
-              "AWS": "arn:aws:iam::096188391785:root"
+              "AWS": "arn:aws:iam::${self:custom.account_number_dev}:root"
             },
             "Action": "sts:AssumeRole",
             "Condition": {}
@@ -44,8 +42,12 @@ Resources:
         - arn:aws:iam::aws:policy/AmazonAPIGatewayAdministrator
         - arn:aws:iam::aws:policy/AmazonCognitoPowerUser
         - arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess
+        - arn:aws:iam::aws:policy/AmazonSNSFullAccess
+        - arn:aws:iam::aws:policy/AmazonSQSFullAccess
         - arn:aws:iam::aws:policy/AWSXrayFullAccess
         - arn:aws:iam::aws:policy/IAMReadOnlyAccess
+        - arn:aws:iam::aws:policy/AmazonSSMFullAccess
+        - arn:aws:iam::aws:policy/AutoScalingFullAccess
       Policies:
         - PolicyName: "IamRoleManage"
           PolicyDocument:
@@ -60,6 +62,7 @@ Resources:
                   - "iam:DeleteRolePolicy"
                   - "iam:PassRole"
                   - "iam:PutRolePolicy"
+                  - "iam:DetachRolePolicy"
                 Resource: "*"
 
         - PolicyName: "CloudFormationFullAccess"
@@ -69,7 +72,6 @@ Resources:
               - Effect: "Allow"
                 Action: "CloudFormation:*"
                 Resource: "*"
-
         - PolicyName: "Route53Zones"
           PolicyDocument:
             Version: "2012-10-17"
@@ -96,6 +98,29 @@ Resources:
                   - "route53:GetHealthCheckStatus"
                   - "route53:GetHealthCheckLastFailureReason"
                 Resource: "*"
+        - PolicyName: "KmsRead"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: "Allow"
+                Action:
+                  - "kms:List*"
+                  - "kms:Describe*"
+                Resource: "*"
+
+  CloudFormationDeployRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      RoleName: CloudFormationDeployRole
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service: "cloudformation.amazonaws.com"
+            Action: "sts:AssumeRole"
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AdministratorAccess
 
   OrganizationAccountAccessAdminRole:
     Type: "AWS::IAM::Role"
@@ -107,7 +132,7 @@ Resources:
           {
             "Effect": "Allow",
             "Principal": {
-              "AWS": "arn:aws:iam::096188391785:root"
+              "AWS": "arn:aws:iam::${self:custom.account_number_dev}:root"
             },
             "Action": "sts:AssumeRole",
             "Condition": {}
@@ -116,4 +141,3 @@ Resources:
       }
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/AdministratorAccess
-

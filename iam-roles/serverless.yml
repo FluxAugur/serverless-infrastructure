@@ -1,18 +1,11 @@
-# Welcome to serverless. Read the docs at https://serverless.com/framework/docs/
-#
-# serverless.yml is the configuration the CLI used to deploy your code to your provider of choice
-#
-# The `service` block is the name of the service
 service: iam-roles
 
-# Note: Password policy cannot be set with CFN resources.
-# https://github.com/widdix/aws-cf-templates/blob/master/security/account-password-policy.yaml
+custom:
+  account_number_dev: 096188391785
 
-# The `provider` block defines where your service will be deployed
 provider:
   name: aws
   stage: ${opt:stage, env:SLS_STAGE, 'dev'}
   profile: ${opt:aws-profile, env:AWS_PROFILE, env:AWS_DEFAULT_PROFILE, 'default'}
 
 resources: ${file(./${self:provider.stage}.yml)}
-

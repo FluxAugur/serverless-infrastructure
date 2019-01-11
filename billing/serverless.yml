@@ -1,6 +1,5 @@
 service: billing
 
-# The `provider` block defines where your service will be deployed
 provider:
   name: aws
   stage: ${opt:stage, env:SLS_STAGE, 'dev'}
@@ -8,61 +7,61 @@ provider:
 
 custom:
   billingAlertSubscriptions:
-    - Endpoint: "admin+aws-billing-${self:provider.stage}@nathanialmcconnell.name"
-      Protocol: "email"
+    - Endpoint: admin+aws-billing-${self:provider.stage}@nathanialmcconnell.name
+      Protocol: email
 
 resources:
   Resources:
     BillingAlarmSnsTopic:
-      Type: "AWS::SNS::Topic"
+      Type: AWS::SNS::Topic
       Properties:
         DisplayName: BillingAlarm
         Subscription: ${self:custom.billingAlertSubscriptions}
 
     BillingAlarm10:
-      Type: "AWS::CloudWatch::Alarm"
+      Type: AWS::CloudWatch::Alarm
       Properties:
-        ComparisonOperator: "GreaterThanOrEqualToThreshold"
+        ComparisonOperator: GreaterThanOrEqualToThreshold
         EvaluationPeriods: 1
         Period: 21600
-        Namespace: "AWS/Billing"
-        MetricName: "EstimatedCharges"
+        Namespace: AWS/Billing
+        MetricName: EstimatedCharges
         Dimensions:
-          - Name: "Currency"
-            Value: "USD"
-        Statistic: "Maximum"
+          - Name: Currency
+            Value: USD
+        Statistic: Maximum
         Threshold: 10
         AlarmActions:
           - Ref: BillingAlarmSnsTopic
 
     BillingAlarm25:
-      Type: "AWS::CloudWatch::Alarm"
+      Type: AWS::CloudWatch::Alarm
       Properties:
-        ComparisonOperator: "GreaterThanOrEqualToThreshold"
+        ComparisonOperator: GreaterThanOrEqualToThreshold
         EvaluationPeriods: 1
         Period: 21600
-        Namespace: "AWS/Billing"
-        MetricName: "EstimatedCharges"
+        Namespace: AWS/Billing
+        MetricName: EstimatedCharges
         Dimensions:
-          - Name: "Currency"
-            Value: "USD"
-        Statistic: "Maximum"
+          - Name: Currency
+            Value: USD
+        Statistic: Maximum
         Threshold: 25
         AlarmActions:
           - Ref: BillingAlarmSnsTopic
 
     BillingAlarm50:
-      Type: "AWS::CloudWatch::Alarm"
+      Type: AWS::CloudWatch::Alarm
       Properties:
-        ComparisonOperator: "GreaterThanOrEqualToThreshold"
+        ComparisonOperator: GreaterThanOrEqualToThreshold
         EvaluationPeriods: 1
         Period: 21600
-        Namespace: "AWS/Billing"
-        MetricName: "EstimatedCharges"
+        Namespace: AWS/Billing
+        MetricName: EstimatedCharges
         Dimensions:
-          - Name: "Currency"
-            Value: "USD"
-        Statistic: "Maximum"
+          - Name: Currency
+            Value: USD
+        Statistic: Maximum
         Threshold: 50
         AlarmActions:
           - Ref: BillingAlarmSnsTopic

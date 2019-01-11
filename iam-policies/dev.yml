@@ -1,0 +1,71 @@
+Resources:
+  CloudFormationFullAccess:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      ManagedPolicyName: CloudFormationFullAccess
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action: 'cloudformation:*'
+            Resource: '*'
+
+  OrganizationAccountAccessDevPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      ManagedPolicyName: OrganizationAccountAccessDev
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action: sts:assumeRole
+            Resource: arn:aws:iam::${self:custom.account_number_dev}:role/OrganizationAccountAccessRole
+
+  OrganizationAccountAccessDevUsersPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      ManagedPolicyName: OrganizationAccountAccessDevUsers
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action: sts:assumeRole
+            Resource: arn:aws:iam::${self:custom.account_number_dev}:role/OrganizationAccountAccessUserRole
+
+  OrganizationAccountAccessDevAdminsPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      ManagedPolicyName: OrganizationAccountAccessDevAdmins
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action: sts:assumeRole
+            Resource: arn:aws:iam::${self:custom.account_number_dev}:role/OrganizationAccountAccessAdminRole
+
+Outputs:
+  CloudFormationFullAccessArn:
+    Description: Policy ARN
+    Value:
+      Ref: CloudFormationFullAccess
+    Export:
+      Name: ${self:service}-${self:provider.stage}-CloudFormationFullAccessArn
+
+  OrganizationAccountAccessDevPolicyArn:
+    Description: Policy ARN
+    Value:
+      Ref: OrganizationAccountAccessDevPolicy
+    Export:
+      Name: ${self:service}-${self:provider.stage}-OrganizationAccountAccessDevPolicyArn
+  OrganizationAccountAccessDevUsersPolicyArn:
+    Description: Policy ARN
+    Value:
+      Ref: OrganizationAccountAccessDevUsersPolicy
+    Export:
+      Name: ${self:service}-${self:provider.stage}-OrganizationAccountAccessDevUsersPolicyArn
+  OrganizationAccountAccessDevAdminPolicyArn:
+    Description: Policy ARN
+    Value:
+      Ref: OrganizationAccountAccessDevAdminsPolicy
+    Export:
+      Name: ${self:service}-${self:provider.stage}-OrganizationAccountAccessDevAdminPolicyArn
